@@ -10,7 +10,7 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
 
-    <groupId>com.zeng1998</groupId>
+    <groupId>com.wut</groupId>
     <artifactId>Api-open-platform-backend</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>Api-open-platform-backend</name>
