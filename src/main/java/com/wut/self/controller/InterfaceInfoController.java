@@ -19,6 +19,7 @@ import com.wut.self.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -144,6 +145,7 @@ public class InterfaceInfoController {
     /**
      * 分页获取列表
      */
+    @Transactional
     @GetMapping("/list/page")
     public BaseResponse<Page<InterfaceInfo>> listInterfaceInfoByPage(InterfaceInfoQueryRequest InterfaceInfoQueryRequest) {
         if (InterfaceInfoQueryRequest == null) {

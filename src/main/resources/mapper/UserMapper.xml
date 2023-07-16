@@ -6,7 +6,7 @@
 
     <resultMap id="BaseResultMap" type="com.wut.self.model.entity.User">
         <id property="id" column="id" jdbcType="BIGINT"/>
-        <result property="userName" column="userName" jdbcType="VARCHAR"/>
+        <result property="username" column="userName" jdbcType="VARCHAR"/>
         <result property="userAccount" column="userAccount" jdbcType="VARCHAR"/>
         <result property="userAvatar" column="userAvatar" jdbcType="VARCHAR"/>
         <result property="gender" column="gender" jdbcType="TINYINT"/>

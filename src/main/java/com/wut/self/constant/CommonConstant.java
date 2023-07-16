@@ -26,4 +26,9 @@ public interface CommonConstant {
      * Post请求
      */
     String POST_METHOD = "Post";
+
+    /**
+     * 默认的头像连接
+     */
+    String DEFAULT_AVATAR_URL = "https://typora-myself.oss-cn-hangzhou.aliyuncs.com/typora_img/Project--测试用头像.jpg";
 }
