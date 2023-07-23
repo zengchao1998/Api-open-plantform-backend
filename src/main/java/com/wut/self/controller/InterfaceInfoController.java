@@ -2,18 +2,19 @@ package com.wut.self.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.google.gson.Gson;
+import com.wut.sdk.client.ApiClient;
 import com.wut.self.annotation.AuthCheck;
-import com.wut.self.common.BaseResponse;
-import com.wut.self.common.DeleteRequest;
-import com.wut.self.common.ErrorCode;
-import com.wut.self.common.ResultUtils;
+import com.wut.self.common.*;
 import com.wut.self.constant.CommonConstant;
 import com.wut.self.exception.BusinessException;
 import com.wut.self.model.dto.interfaceinfo.InterfaceInfoAddRequest;
+import com.wut.self.model.dto.interfaceinfo.InterfaceInfoInvokeRequest;
 import com.wut.self.model.dto.interfaceinfo.InterfaceInfoQueryRequest;
 import com.wut.self.model.dto.interfaceinfo.InterfaceInfoUpdateRequest;
 import com.wut.self.model.entity.InterfaceInfo;
 import com.wut.self.model.entity.User;
+import com.wut.self.model.enums.InterfaceInfoStatusEnum;
 import com.wut.self.service.InterfaceInfoService;
 import com.wut.self.service.UserService;
 import lombok.extern.slf4j.Slf4j;
@@ -37,10 +38,13 @@ import java.util.List;
 public class InterfaceInfoController {
 
     @Resource
-    private InterfaceInfoService InterfaceInfoService;
+    private InterfaceInfoService interfaceInfoService;
 
     @Resource
     private UserService userService;
+
+    @Resource
+    private ApiClient apiClient;
 
     /**
      * 创建
@@ -53,10 +57,10 @@ public class InterfaceInfoController {
         InterfaceInfo InterfaceInfo = new InterfaceInfo();
         BeanUtils.copyProperties(InterfaceInfoAddRequest, InterfaceInfo);
         // 校验
-        InterfaceInfoService.validInterfaceInfo(InterfaceInfo, true);
+        interfaceInfoService.validInterfaceInfo(InterfaceInfo, true);
         User loginUser = userService.getLoginUser(request);
         InterfaceInfo.setUserId(loginUser.getId());
-        boolean result = InterfaceInfoService.save(InterfaceInfo);
+        boolean result = interfaceInfoService.save(InterfaceInfo);
         if (!result) {
             throw new BusinessException(ErrorCode.OPERATION_ERROR);
         }
@@ -75,7 +79,7 @@ public class InterfaceInfoController {
         User user = userService.getLoginUser(request);
         long id = deleteRequest.getId();
         // 判断是否存在
-        InterfaceInfo oldInterfaceInfo = InterfaceInfoService.getById(id);
+        InterfaceInfo oldInterfaceInfo = interfaceInfoService.getById(id);
         if (oldInterfaceInfo == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
         }
@@ -83,7 +87,7 @@ public class InterfaceInfoController {
         if (!oldInterfaceInfo.getUserId().equals(user.getId()) && !userService.isAdmin(request)) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }
-        boolean b = InterfaceInfoService.removeById(id);
+        boolean b = interfaceInfoService.removeById(id);
         return ResultUtils.success(b);
     }
 
@@ -92,18 +96,18 @@ public class InterfaceInfoController {
      */
     @PostMapping("/update")
     public BaseResponse<Boolean> updateInterfaceInfo(@RequestBody InterfaceInfoUpdateRequest InterfaceInfoUpdateRequest,
-                                            HttpServletRequest request) {
+                                                     HttpServletRequest request) {
         if (InterfaceInfoUpdateRequest == null || InterfaceInfoUpdateRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         InterfaceInfo InterfaceInfo = new InterfaceInfo();
         BeanUtils.copyProperties(InterfaceInfoUpdateRequest, InterfaceInfo);
         // 参数校验
-        InterfaceInfoService.validInterfaceInfo(InterfaceInfo, false);
+        interfaceInfoService.validInterfaceInfo(InterfaceInfo, false);
         User user = userService.getLoginUser(request);
         long id = InterfaceInfoUpdateRequest.getId();
         // 判断是否存在
-        InterfaceInfo oldInterfaceInfo = InterfaceInfoService.getById(id);
+        InterfaceInfo oldInterfaceInfo = interfaceInfoService.getById(id);
         if (oldInterfaceInfo == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
         }
@@ -111,7 +115,7 @@ public class InterfaceInfoController {
         if (!oldInterfaceInfo.getUserId().equals(user.getId()) && !userService.isAdmin(request)) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }
-        boolean result = InterfaceInfoService.updateById(InterfaceInfo);
+        boolean result = interfaceInfoService.updateById(InterfaceInfo);
         return ResultUtils.success(result);
     }
 
@@ -123,7 +127,7 @@ public class InterfaceInfoController {
         if (id <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        InterfaceInfo InterfaceInfo = InterfaceInfoService.getById(id);
+        InterfaceInfo InterfaceInfo = interfaceInfoService.getById(id);
         return ResultUtils.success(InterfaceInfo);
     }
 
@@ -138,7 +142,7 @@ public class InterfaceInfoController {
             BeanUtils.copyProperties(InterfaceInfoQueryRequest, InterfaceInfoQuery);
         }
         QueryWrapper<InterfaceInfo> queryWrapper = new QueryWrapper<>(InterfaceInfoQuery);
-        List<InterfaceInfo> InterfaceInfoList = InterfaceInfoService.list(queryWrapper);
+        List<InterfaceInfo> InterfaceInfoList = interfaceInfoService.list(queryWrapper);
         return ResultUtils.success(InterfaceInfoList);
     }
 
@@ -168,7 +172,93 @@ public class InterfaceInfoController {
         queryWrapper.like(StringUtils.isNotBlank(description), "description", description);
         queryWrapper.orderBy(StringUtils.isNotBlank(sortField),
                 sortOrder.equals(CommonConstant.SORT_ORDER_ASC), sortField);
-        Page<InterfaceInfo> InterfaceInfoPage = InterfaceInfoService.page(new Page<>(current, size), queryWrapper);
+        Page<InterfaceInfo> InterfaceInfoPage = interfaceInfoService.page(new Page<>(current, size), queryWrapper);
         return ResultUtils.success(InterfaceInfoPage);
+    }
+
+    /**
+     * 发布接口
+     */
+    @PostMapping("/online")
+    @AuthCheck(mustRole = "admin")
+    public BaseResponse<Boolean> onlineInterfaceInfo(@RequestBody IdRequest idRequest) {
+        if (idRequest == null || idRequest.getId() <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        long id = idRequest.getId();
+        // 判断接口是否存在
+        InterfaceInfo oldInterfaceInfo = interfaceInfoService.getById(id);
+        if (oldInterfaceInfo == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
+        }
+        // 判断接口是否可以调用(客户端sdk)
+        // todo 由固定方法名该为根据测试地址来调用
+        com.wut.sdk.bean.User user = new com.wut.sdk.bean.User();
+        user.setUsername("");
+        String username = apiClient.getUsernameByPost(user);
+        if (StringUtils.isBlank(username)) {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "接口验证失败");
+        }
+        // 修改接口数据库中的状态字段 1
+        InterfaceInfo interfaceInfo = new InterfaceInfo();
+        BeanUtils.copyProperties(oldInterfaceInfo, interfaceInfo);
+        interfaceInfo.setStatus(InterfaceInfoStatusEnum.ONLINE.getValue());
+        boolean result = interfaceInfoService.updateById(interfaceInfo);
+        return ResultUtils.success(result);
+    }
+
+    /**
+     * 下线接口
+     */
+    @PostMapping("/offline")
+    @AuthCheck(mustRole = "admin")
+    public BaseResponse<Boolean> offlineInterfaceInfo(@RequestBody IdRequest idRequest) {
+        if (idRequest == null || idRequest.getId() <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        long id = idRequest.getId();
+        // 判断接口是否存在
+        InterfaceInfo oldInterfaceInfo = interfaceInfoService.getById(id);
+        if (oldInterfaceInfo == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
+        }
+        // 修改数据库中的状态字段 0
+        InterfaceInfo interfaceInfo = new InterfaceInfo();
+        BeanUtils.copyProperties(oldInterfaceInfo, interfaceInfo);
+        interfaceInfo.setStatus(InterfaceInfoStatusEnum.OFFLINE.getValue());
+        boolean result = interfaceInfoService.updateById(interfaceInfo);
+        return ResultUtils.success(result);
+    }
+
+    /**
+     * 在线调用接口
+     */
+    @PostMapping("/invoke")
+    public BaseResponse<Object> invokeInterfaceInfo(@RequestBody InterfaceInfoInvokeRequest interfaceInfoInvokeRequest,
+                                                      HttpServletRequest request) {
+        if (interfaceInfoInvokeRequest == null || interfaceInfoInvokeRequest.getId() < 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        long id = interfaceInfoInvokeRequest.getId();
+        String params = interfaceInfoInvokeRequest.getUserRequestParams();
+        // 判断接口是否存在
+        InterfaceInfo oldInterfaceInfo = interfaceInfoService.getById(id);
+        if (oldInterfaceInfo == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
+        }
+        // 判断接口是否可以调用
+        if (oldInterfaceInfo.getStatus() == InterfaceInfoStatusEnum.OFFLINE.getValue()) {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "接口已关闭");
+        }
+        // 调用接口
+        // todo 由固定方法名该为根据测试地址来调用
+        User loginUser = userService.getLoginUser(request);
+        String accessKey = loginUser.getAccessKey();
+        String secretKey = loginUser.getSecretKey();
+        Gson gson = new Gson();
+        com.wut.sdk.bean.User user = gson.fromJson(params, com.wut.sdk.bean.User.class);
+        ApiClient tempClient = new ApiClient(accessKey, secretKey);
+        String result = tempClient.getUsernameByPost(user);
+        return ResultUtils.success(result);
     }
 }

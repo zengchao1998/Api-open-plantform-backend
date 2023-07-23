@@ -44,17 +44,17 @@ public class InterfaceInfoServiceImpl extends ServiceImpl<InterfaceInfoMapper, I
             }
         }
         // 具体的参数要求
-        if(StringUtils.isNotBlank(name) && name.length() > 10) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        if(StringUtils.isNotBlank(name) && name.length() > 20) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "接口名称过长");
         }
         if(StringUtils.isNotBlank(description) && description.length() > 2000) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "描述过长");
         }
-        if(StringUtils.isNotBlank(method) && (method.equals(GET_METHOD) || method.equals(POST_METHOD))) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        if(StringUtils.isNotBlank(method) && !(method.equals(GET_METHOD) || method.equals(POST_METHOD))) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "请求方法不符合规范");
         }
-        if(StringUtils.isNotBlank(url) && url.matches("^(https?|ftp)://[^\\s/$.?#].\\S*$")) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        if(StringUtils.isNotBlank(url) && !url.matches("^(https?|ftp)://[^\\s/$.?#].\\S*$")) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "URL格式错误");
         }
     }
 }

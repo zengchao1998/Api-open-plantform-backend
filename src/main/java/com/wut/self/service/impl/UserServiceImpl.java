@@ -1,5 +1,6 @@
 package com.wut.self.service.impl;
 
+import cn.hutool.core.util.RandomUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.wut.self.constant.UserConstant;
@@ -37,6 +38,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
      */
     private static final String SALT = "zeng1998";
 
+    private static final String AK_SALT = "access";
+
+    private static final String SK_SALT = "secret";
+
     @Override
     public long userRegister(String userAccount, String userPassword, String checkPassword) {
         // 1. 校验
@@ -63,10 +68,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             }
             // 2. 加密
             String encryptPassword = DigestUtils.md5DigestAsHex((SALT + userPassword).getBytes());
-            // 3. 插入数据
+            // 3. 为用户生配 ak、sk
+            String accessKey = DigestUtils.md5DigestAsHex((AK_SALT + userAccount + RandomUtil.randomNumbers(5)).getBytes());
+            String secretKey = DigestUtils.md5DigestAsHex((SK_SALT + userAccount + RandomUtil.randomNumbers(5)).getBytes());
+            // 4. 插入数据
             User user = new User();
             user.setUserAccount(userAccount);
             user.setUserPassword(encryptPassword);
+            user.setAccessKey(accessKey);
+            user.setSecretKey(secretKey);
             // 设定默认值
             user.setUserAvatar(DEFAULT_AVATAR_URL);
             user.setUsername(userAccount);

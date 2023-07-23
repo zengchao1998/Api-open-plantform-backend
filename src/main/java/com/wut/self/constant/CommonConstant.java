@@ -20,12 +20,12 @@ public interface CommonConstant {
     /**
      * Get请求
      */
-    String GET_METHOD = "Get";
+    String GET_METHOD = "GET";
 
     /**
      * Post请求
      */
-    String POST_METHOD = "Post";
+    String POST_METHOD = "POST";
 
     /**
      * 默认的头像连接
