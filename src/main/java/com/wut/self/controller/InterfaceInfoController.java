@@ -16,7 +16,6 @@ import com.wut.self.model.dto.interfaceinfo.InterfaceInfoQueryRequest;
 import com.wut.self.model.dto.interfaceinfo.InterfaceInfoUpdateRequest;
 import com.wut.self.model.enums.InterfaceInfoStatusEnum;
 import com.wut.self.service.InterfaceInfoService;
-import com.wut.self.service.UserInterfaceInfoService;
 import com.wut.self.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -44,9 +43,6 @@ public class InterfaceInfoController {
 
     @Resource
     private UserService userService;
-
-    @Resource
-    private UserInterfaceInfoService userInterfaceInfoService;
 
     @Resource
     private ApiClient apiClient;
