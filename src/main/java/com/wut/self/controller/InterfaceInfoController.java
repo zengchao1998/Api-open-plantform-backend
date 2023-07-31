@@ -2,20 +2,21 @@ package com.wut.self.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.google.gson.Gson;
+import com.wut.common.model.entity.InterfaceInfo;
+import com.wut.common.model.entity.User;
 import com.wut.sdk.client.ApiClient;
 import com.wut.self.annotation.AuthCheck;
 import com.wut.self.common.*;
 import com.wut.self.constant.CommonConstant;
+import com.wut.self.constant.UserConstant;
 import com.wut.self.exception.BusinessException;
 import com.wut.self.model.dto.interfaceinfo.InterfaceInfoAddRequest;
 import com.wut.self.model.dto.interfaceinfo.InterfaceInfoInvokeRequest;
 import com.wut.self.model.dto.interfaceinfo.InterfaceInfoQueryRequest;
 import com.wut.self.model.dto.interfaceinfo.InterfaceInfoUpdateRequest;
-import com.wut.self.model.entity.InterfaceInfo;
-import com.wut.self.model.entity.User;
 import com.wut.self.model.enums.InterfaceInfoStatusEnum;
 import com.wut.self.service.InterfaceInfoService;
+import com.wut.self.service.UserInterfaceInfoService;
 import com.wut.self.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+
 
 /**
  * 接口信息控制层
@@ -42,6 +44,9 @@ public class InterfaceInfoController {
 
     @Resource
     private UserService userService;
+
+    @Resource
+    private UserInterfaceInfoService userInterfaceInfoService;
 
     @Resource
     private ApiClient apiClient;
@@ -134,7 +139,7 @@ public class InterfaceInfoController {
     /**
      * 获取列表（仅管理员可使用）
      */
-    @AuthCheck(mustRole = "admin")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     @GetMapping("/list")
     public BaseResponse<List<InterfaceInfo>> listInterfaceInfo(InterfaceInfoQueryRequest InterfaceInfoQueryRequest) {
         InterfaceInfo InterfaceInfoQuery = new InterfaceInfo();
@@ -180,7 +185,7 @@ public class InterfaceInfoController {
      * 发布接口
      */
     @PostMapping("/online")
-    @AuthCheck(mustRole = "admin")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Boolean> onlineInterfaceInfo(@RequestBody IdRequest idRequest) {
         if (idRequest == null || idRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
@@ -211,7 +216,7 @@ public class InterfaceInfoController {
      * 下线接口
      */
     @PostMapping("/offline")
-    @AuthCheck(mustRole = "admin")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Boolean> offlineInterfaceInfo(@RequestBody IdRequest idRequest) {
         if (idRequest == null || idRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
@@ -240,7 +245,6 @@ public class InterfaceInfoController {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         long id = interfaceInfoInvokeRequest.getId();
-        String params = interfaceInfoInvokeRequest.getUserRequestParams();
         // 判断接口是否存在
         InterfaceInfo oldInterfaceInfo = interfaceInfoService.getById(id);
         if (oldInterfaceInfo == null) {
@@ -251,14 +255,18 @@ public class InterfaceInfoController {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "接口已关闭");
         }
         // 调用接口
-        // todo 由固定方法名该为根据测试地址来调用
+        String params = interfaceInfoInvokeRequest.getUserRequestParams();
+        if(StringUtils.isBlank(params)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "请求参数错误");
+        }
+        String path = oldInterfaceInfo.getPath();
+        String targetHost = oldInterfaceInfo.getHost();
         User loginUser = userService.getLoginUser(request);
         String accessKey = loginUser.getAccessKey();
         String secretKey = loginUser.getSecretKey();
-        Gson gson = new Gson();
-        com.wut.sdk.bean.User user = gson.fromJson(params, com.wut.sdk.bean.User.class);
         ApiClient tempClient = new ApiClient(accessKey, secretKey);
-        String result = tempClient.getUsernameByPost(user);
+        // 传入接口实际的host和path
+        String result = tempClient.invokeAPIByURL(params, targetHost, path);
         return ResultUtils.success(result);
     }
 }

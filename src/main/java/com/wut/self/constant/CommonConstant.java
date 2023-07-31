@@ -2,7 +2,6 @@ package com.wut.self.constant;
 
 /**
  * 通用常量
- *
  * @author zeng1998
  */
 public interface CommonConstant {

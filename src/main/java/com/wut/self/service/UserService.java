@@ -1,9 +1,7 @@
 package com.wut.self.service;
 
-
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.wut.self.model.entity.User;
-
+import com.wut.common.model.entity.User;
 import javax.servlet.http.HttpServletRequest;
 
 /**

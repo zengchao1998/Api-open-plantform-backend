@@ -30,9 +30,14 @@ public class InterfaceInfoUpdateRequest implements Serializable {
     private String description;
 
     /**
+     * 接口host
+     */
+    private String host;
+
+    /**
      * 接口地址
      */
-    private String url;
+    private String path;
 
     /**
      * 请求类型GET/POST

@@ -1,6 +1,6 @@
 package com.wut.self.mapper;
 
-import com.wut.self.model.entity.InterfaceInfo;
+import com.wut.common.model.entity.InterfaceInfo;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 /**

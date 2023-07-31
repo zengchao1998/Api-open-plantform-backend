@@ -1,11 +1,11 @@
 package com.wut.self.aop;
 
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.wut.common.model.entity.User;
 import com.wut.self.annotation.AuthCheck;
+import com.wut.self.common.ErrorCode;
 import com.wut.self.exception.BusinessException;
 import com.wut.self.service.UserService;
-import com.wut.self.common.ErrorCode;
-import com.wut.self.model.entity.User;
 import org.apache.commons.lang3.StringUtils;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;

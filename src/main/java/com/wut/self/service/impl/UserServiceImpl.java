@@ -3,12 +3,12 @@ package com.wut.self.service.impl;
 import cn.hutool.core.util.RandomUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.wut.common.model.entity.User;
+import com.wut.self.common.ErrorCode;
 import com.wut.self.constant.UserConstant;
 import com.wut.self.exception.BusinessException;
 import com.wut.self.mapper.UserMapper;
 import com.wut.self.service.UserService;
-import com.wut.self.common.ErrorCode;
-import com.wut.self.model.entity.User;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -160,7 +160,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         request.getSession().removeAttribute(UserConstant.USER_LOGIN_STATE);
         return true;
     }
-
 }
 
 
